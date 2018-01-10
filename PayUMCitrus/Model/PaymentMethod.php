@@ -147,7 +147,7 @@ class PaymentMethod extends \Magento\Payment\Model\Method\AbstractMethod
 			$action = 'https://secure.payu.in/_payment.php';
 			
 			if($environment == 'sandbox')
-				$action = 'https://test.payu.in/_payment.php';
+				$action = 'https://sandboxsecure.payu.in/_payment.php';
 			
 			$currency = $order->getOrderCurrencyCode();
         	$billingAddress = $order->getBillingAddress();
