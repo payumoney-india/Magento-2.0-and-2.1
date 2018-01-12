@@ -106,14 +106,15 @@ class CallbackPayum extends AppAction
 				$productInfo  		= 	$postdata['productinfo'];
 				$firstname    		= 	$postdata['firstname'];
 				$email        		=	$postdata['email'];
-				$keyString 	  		=  	$pumkey.'|'.$ordid.'|'.$amount.'|'.$productInfo.'|'.$firstname.'|'.$email.'||||||||||';
+				$udf5				= 	$postdata['udf5'];
+				$keyString 	  		=  	$pumkey.'|'.$ordid.'|'.$amount.'|'.$productInfo.'|'.$firstname.'|'.$email.'|||||'.$udf5.'|||||';
 				$keyArray 	  		= 	explode("|",$keyString);
 				$reverseKeyArray 	= 	array_reverse($keyArray);
 				$reverseKeyString	=	implode("|",$reverseKeyArray);
 				
 				$message = '';
-				$message .= 'orderId: ' . $ordid . "\n";
-				$message .= 'Transaction Id: ' . $postdata['mihpayid'] . "\n";
+				$message .= 'orderId / Transaction ID: ' . $ordid . "\n";
+				//$message .= 'Transaction Id: ' . $postdata['mihpayid'] . "\n";
 				
 				
 				if (isset($postdata['status']) && $postdata['status'] == 'success') {
@@ -127,7 +128,7 @@ class CallbackPayum extends AppAction
 					}
 					if($sentHashString==$responseHashString){
 						// success	
-						$this->_registerPaymentCapture ($postdata['mihpayid'], $amount, $message);
+						$this->_registerPaymentCapture ($ordid, $amount, $message);
 						//$this->_logger->addInfo("Payum Response Order success..".$txMsg);
 				
 						$redirectUrl = $this->_paymentMethod->getSuccessUrl();

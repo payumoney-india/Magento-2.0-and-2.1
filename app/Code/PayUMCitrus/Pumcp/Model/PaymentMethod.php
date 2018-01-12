@@ -39,7 +39,7 @@ class PaymentMethod extends \Magento\Payment\Model\Method\AbstractMethod
     * @var \Magento\Sales\Model\OrderFactory
     */
     protected $_orderFactory;
-
+	protected $_countryHelper;
     /**
     * @var \Magento\Store\Model\StoreManagerInterface
     */
@@ -90,7 +90,7 @@ class PaymentMethod extends \Magento\Payment\Model\Method\AbstractMethod
       $this->_transactionBuilder = $transactionBuilder;
       $this->_orderFactory = $orderFactory;
       $this->_storeManager = $storeManager;
-
+	  $this->_countryHelper = \Magento\Framework\App\ObjectManager::getInstance()->get('\Magento\Directory\Model\Country');
       parent::__construct(
           $context,
           $registry,
@@ -158,16 +158,21 @@ class PaymentMethod extends \Magento\Payment\Model\Method\AbstractMethod
 			$zipcode = $billingAddress->getData('postcode');
 			$email = $billingAddress->getData('email');
 			$phone = $billingAddress->getData('telephone');
-			$address = $billingAddress->getData('street');
+			$address = $billingAddress->getStreet();
         	$state = $billingAddress->getData('region');
         	$city = $billingAddress->getData('city');
-        	$country = $billingAddress->getCountry();
+        	$country = $billingAddress->getData('country_id');
+			$countryObj = $this->_countryHelper->loadByCode($country);
+			$country = $countryObj->getName();
+			
 			$Pg = 'CC';
 			$surl = self::getPayUMReturnUrl();
 			$furl = self::getPayUMReturnUrl();;
 			$curl = self::getPayUMReturnUrl();;
 			
-			$hash=hash('sha512', $pumkey.'|'.$txnid.'|'.$amount.'|'.$productInfo.'|'.$firstname.'|'.$email.'|||||||||||'.$pumsalt); 
+			$udf5 = 'Magento_v_2.1';
+			
+			$hash=hash('sha512', $pumkey.'|'.$txnid.'|'.$amount.'|'.$productInfo.'|'.$firstname.'|'.$email.'|||||'.$udf5.'||||||'.$pumsalt); 
 			$user_credentials = $pumkey.':'.$email;		
 			$service_provider = 'payu_paisa';
 	
@@ -187,11 +192,12 @@ class PaymentMethod extends \Magento\Payment\Model\Method\AbstractMethod
 						<input type=\"hidden\" name=\"Hash\" value=\"".$hash."\" />
 						<input type=\"hidden\" name=\"Pg\" value=\"". $Pg."\" />
 						<input type=\"hidden\" name=\"service_provider\" value=\"". $service_provider ."\" />
-						<input type=\"hidden\" name=\"address1\" value=\"".$address ."\" />
-				        <input type=\"hidden\" name=\"address2\" value=\"\" />
+						<input type=\"hidden\" name=\"address1\" value=\"".$address[0] ."\" />
+				        <input type=\"hidden\" name=\"address2\" value=\"".(isset($address[1])? $address[1] : '') ."\" />
 					    <input type=\"hidden\" name=\"city\" value=\"". $city."\" />
 				        <input type=\"hidden\" name=\"country\" value=\"".$country."\" />
 				        <input type=\"hidden\" name=\"state\" value=\"". $state."\" />
+						<input type=\"hidden\" name=\"udf5\" value=\"". $udf5."\" />
 				        <button style='display:none' id='submit_payum_payment_form' name='submit_payum_payment_form' >Pay Now</button>
 					</form>
 					<script type=\"text/javascript\">document.getElementById(\"payu_form\").submit();</script>
@@ -227,7 +233,9 @@ class PaymentMethod extends \Magento\Payment\Model\Method\AbstractMethod
 		$city = $billingAddress->getCity();
 		$postcode = $billingAddress->getPostcode();
 		$region = $billingAddress->getRegion();
-		$country = $billingAddress->getCountry();
+		$country = $billingAddress->getData('country_id');
+		$countryObj = $this->_countryHelper->loadByCode($country);
+		$country = $countryObj->getName();
 		$telephone = $billingAddress->getTelephone();
 
 		//create security signature
